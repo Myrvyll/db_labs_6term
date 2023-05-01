@@ -1,0 +1,15 @@
+version: "3"
+services:
+  postgres_db:
+    image: postgres:15-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=Ashtar
+      - POSTGRES_PASSWORD=sunset_clouds
+      - POSTGRES_DB=db_laboratory
+    networks:
+      - databases_lab
+
+networks:
+  databases_lab:
