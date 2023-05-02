@@ -1,0 +1,27 @@
+version: "3"
+services:
+  postgres_db:
+    image: postgres:15-alpine
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - '${DATABASE_PORT}:5432'
+    networks:
+      - databases_lab
+  
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    depends_on:
+      - postgres_db
+    env_file:
+      - .env
+    networks:
+      - databases_lab
+
+
+
+networks:
+  databases_lab:
