@@ -4,12 +4,19 @@ import re
 import pandas as pd
 import time
 import numpy
+import os
 
-USER = 'Ashtar'
-PASSWORD = 'sunset_clouds'
-DATABASE = 'db_laboratory'
-PORT = 5433
-RESULTS_FILENAME = 'query.txt'
+logger = logging.getLogger()
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s: %(levelname)s - %(message)s')
+
+USER = os.getenv('POSTGRES_USER')
+PASSWORD = os.getenv('POSTGRES_PASSWORD')
+DATABASE = os.getenv('POSTGRES_DB')
+PORT = 5432
+RESULTS_FILENAME = os.getenv('DATABASE_OUTPUT_FILENAME')
+
+logger.info(f"{USER}, {PASSWORD}, {DATABASE}, {PORT}, {RESULTS_FILENAME}")
+
 
 def get_headers(file_info: dict):
     with open(file_info['filename'], encoding=file_info['encoding']) as f:
@@ -103,7 +110,7 @@ def write_file_to_db(file_info, chunksize):
     # write  to database
     while True:
         try:
-            connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT)
+            connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT, host='postgres_db')
             cursor = connection.cursor()
             cursor.execute("SELECT sum(transaction_volume) FROM TransactionLog WHERE transaction_file = %s", (file_info['file_id'], ))
             marker = cursor.fetchone()[0]
@@ -115,6 +122,10 @@ def write_file_to_db(file_info, chunksize):
             f19 = pd.read_csv(file_info['filename'], sep=';', header=0, names=file_info['headers'], \
                               encoding=file_info['encoding'], chunksize=chunksize, skiprows=marker, decimal=',',\
                               engine='c')
+            
+            if f19.nrows is None:
+                logger.warning("All data is already written into database.")
+                break
 
             for k, chunk in enumerate(f19):
                 # print(f'Its {k+1 + marker//chunksize} block!')
@@ -124,11 +135,12 @@ def write_file_to_db(file_info, chunksize):
                 cursor.execute(log_query)
                 connection.commit()
                 logger.info(f"{file_info['file_id']}: {k+1 + marker//chunksize} chunk has been written.")
+            
+            logger.info(f'File {file_info["file_id"]} was loaded into database.\n')
             break
 
         except psycopg2.Error as error:
             logger.warning(error)
-            # print(error)
             time.sleep(15)
         except FileNotFoundError as error:
             logger.error(error)
@@ -148,8 +160,6 @@ FILE_21_INFO = {'filename': r'../data/Odata2021File.csv',
                 'encoding': 'utf-8',
                 'file_id': 'ZNO2021'}
 
-logger = logging.getLogger()
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s: %(levelname)s - %(message)s')
 
 time_start = time.time()
 FILE_19_INFO['headers'] = get_headers(FILE_19_INFO)
@@ -177,12 +187,12 @@ sql_command_create_log_table = \
        transaction_volume  int      NULL);'''
 
 # create database
-for _ in range(3):
+for _ in range(5):
     try:
-        connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT)
+        connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT, host='postgres_db')
         cursor = connection.cursor()
-        # cursor.execute('DROP TABLE IF EXISTS znodata CASCADE')
-        # cursor.execute('DROP TABLE IF EXISTS transactionlog CASCADE')
+        cursor.execute('DROP TABLE IF EXISTS znodata CASCADE')
+        cursor.execute('DROP TABLE IF EXISTS transactionlog CASCADE')
         cursor.execute(sql_command_create_main_table)
         cursor.execute(sql_command_create_log_table)
         connection.commit()
@@ -196,16 +206,20 @@ for _ in range(3):
     
 FILE_19_INFO['headers'] = [re.sub('^ukr', 'uml', x) for x in FILE_19_INFO['headers']]
 
-# write_file_to_db(FILE_19_INFO, chunksize=2000)
-logger.info(f'File {FILE_19_INFO["file_id"]} was loaded into database.\n')
+write_file_to_db(FILE_19_INFO, chunksize=2000)
 time_end1 = time.time()
 logger.info(f'Time for 1 file: {convert(time_end1 - time_start)}')
 
-# write_file_to_db(FILE_21_INFO, chunksize=2000)
-logger.info(f'File {FILE_21_INFO["file_id"]} loaded into database.\n')
+write_file_to_db(FILE_21_INFO, chunksize=2000)
 time_end2 = time.time()
 logger.info(f'Time for 2 file: {convert(time_end2 - time_end1)}')
 logger.info(f'Total time: {convert(time_end2 - time_start)}')
+
+with open('time.txt', mode='w') as t:
+    t.write(f'Time for 1 file: {convert(time_end1 - time_start)}\n')
+    t.write(f'Time for 2 file: {convert(time_end2 - time_end1)}\n')
+    t.write(f'Total time: {convert(time_end2 - time_start)}\n')
+
 
 query_summary = '''
 SELECT regname, 
@@ -218,7 +232,7 @@ GROUP BY regname'''
 result = None
 for _ in range(3):
     try:
-        connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT)
+        connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT, host='postgres_db')
         cursor = connection.cursor()
         cursor.execute(query_summary)
         result = cursor.fetchall()
@@ -229,6 +243,6 @@ for _ in range(3):
         logger.error(error)
         time.sleep(15)
 
-result = pd.DataFrame(result, columns=['region_name', 'max_ball_2019', 'max_ball_2021'])
-result.to_markdown(RESULTS_FILENAME, index=False)
+result = pd.DataFrame(result, columns=['region_name', 'uml_max_ball_2019', 'uml_max_ball_2021'])
+result.to_csv(RESULTS_FILENAME, index=False)
 logger.info(f'Query results were written to "{RESULTS_FILENAME}".')
