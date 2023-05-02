@@ -123,9 +123,6 @@ def write_file_to_db(file_info, chunksize):
                               encoding=file_info['encoding'], chunksize=chunksize, skiprows=marker, decimal=',',\
                               engine='c')
             
-            if f19.nrows is None:
-                logger.warning("All data is already written into database.")
-                break
 
             for k, chunk in enumerate(f19):
                 # print(f'Its {k+1 + marker//chunksize} block!')
