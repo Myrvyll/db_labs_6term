@@ -1,1 +1,1 @@
--- DROP table IF EXISTS znodata CASCADE;
+DROP table IF EXISTS znodata CASCADE;

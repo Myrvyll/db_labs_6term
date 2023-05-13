@@ -95,13 +95,6 @@ def write_file_to_db(file_info, chunksize):
     headers_string = ', '.join(names)
     headers_string = '(' + headers_string +')'
     
-    while True:
-        try:
-            break
-        except psycopg2.Error as error:
-            logger.warning(error)
-            time.sleep(15)
-    
     # create queries layout
     query_insert = 'INSERT INTO ZNOData ' + headers_string + ' VALUES'
     query_log = 'INSERT INTO TransactionLog (transaction_file, transaction_time, transaction_volume) VALUES '
@@ -183,48 +176,57 @@ sql_command_create_log_table = \
        transaction_time    time     NOT NULL,
        transaction_volume  int      NULL);'''
 
-# create database
-for _ in range(5):
-    try:
-        connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT, host='postgres_db')
-        cursor = connection.cursor()
-        cursor.execute('DROP TABLE IF EXISTS znodata CASCADE')
-        cursor.execute('DROP TABLE IF EXISTS transactionlog CASCADE')
-        cursor.execute(sql_command_create_main_table)
-        cursor.execute(sql_command_create_log_table)
-        connection.commit()
-        connection.close()
-        break
-    except psycopg2.Error as error:
-        logger.error(error)
-        time.sleep(15)
-
-
-    
 FILE_19_INFO['headers'] = [re.sub('^ukr', 'uml', x) for x in FILE_19_INFO['headers']]
 
-write_file_to_db(FILE_19_INFO, chunksize=2000)
-time_end1 = time.time()
-logger.info(f'Time for 1 file: {convert(time_end1 - time_start)}')
 
-write_file_to_db(FILE_21_INFO, chunksize=2000)
-time_end2 = time.time()
-logger.info(f'Time for 2 file: {convert(time_end2 - time_end1)}')
-logger.info(f'Total time: {convert(time_end2 - time_start)}')
+# create database
+if eval(os.getenv('LOAD_FILES_FROM_SCRATCH')):
+    for _ in range(5):
+        try:
+            connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT, host='postgres_db')
+            cursor = connection.cursor()
+            cursor.execute('DROP TABLE IF EXISTS znodata CASCADE')
+            cursor.execute('DROP TABLE IF EXISTS transactionlog CASCADE')
+            cursor.execute(sql_command_create_main_table)
+            cursor.execute(sql_command_create_log_table)
+            connection.commit()
+            connection.close()
+            break
+        except psycopg2.Error as error:
+            logger.error(error)
+            time.sleep(15)
 
-with open('time.txt', mode='w') as t:
-    t.write(f'Time for 1 file: {convert(time_end1 - time_start)}\n')
-    t.write(f'Time for 2 file: {convert(time_end2 - time_end1)}\n')
-    t.write(f'Total time: {convert(time_end2 - time_start)}\n')
+    write_file_to_db(FILE_19_INFO, chunksize=2000)
+    time_end1 = time.time()
+    logger.info(f'Time for 1 file: {convert(time_end1 - time_start)}')
+    
+    write_file_to_db(FILE_21_INFO, chunksize=2000)
+    time_end2 = time.time()
+    logger.info(f'Time for 2 file: {convert(time_end2 - time_end1)}')
+    logger.info(f'Total time: {convert(time_end2 - time_start)}')
+    
+    with open('time.txt', mode='w') as t:
+        t.write(f'Time for 1 file: {convert(time_end1 - time_start)}\n')
+        t.write(f'Time for 2 file: {convert(time_end2 - time_end1)}\n')
+        t.write(f'Total time: {convert(time_end2 - time_start)}\n')
 
+
+# query_summary = '''
+# SELECT regname, 
+#        max(umlball100) FILTER (WHERE testyear=2019) AS max2019,
+# 	   max(umlball100) FILTER (WHERE testyear=2021) AS max2021
+# FROM znodata
+# WHERE umlteststatus = 'Зараховано'
+# GROUP BY regname'''
 
 query_summary = '''
-SELECT regname, 
-       max(umlball100) FILTER (WHERE testyear=2019) AS max2019,
-	   max(umlball100) FILTER (WHERE testyear=2021) AS max2021
-FROM znodata
-WHERE umlteststatus = 'Зараховано'
-GROUP BY regname'''
+SELECT eoregname, 
+       max(ball100) FILTER (WHERE testyear=2019) AS max2019,
+	   max(ball100) FILTER (WHERE testyear=2021) AS max2021
+FROM exams JOIN edfacilities ON ptname = eoname AND ptareaname = eoareaname
+WHERE teststatus = 'Зараховано' AND
+      test = 'Українська мова і література'
+GROUP BY edfacilities.eoregname'''
 
 result = None
 for _ in range(3):
