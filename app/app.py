@@ -223,16 +223,16 @@ if eval(os.getenv('LOAD_FILES_FROM_SCRATCH')):
         t.write(f'Time for 2 file: {convert(time_end2 - time_end1)}\n')
         t.write(f'Total time: {convert(time_end2 - time_start)}\n')
 
-
-# query_summary = '''
-# SELECT regname, 
-#        max(umlball100) FILTER (WHERE testyear=2019) AS max2019,
-# 	   max(umlball100) FILTER (WHERE testyear=2021) AS max2021
-# FROM znodata
-# WHERE umlteststatus = 'Зараховано'
-# GROUP BY regname'''
-
-query_summary = '''
+if eval(os.getenv('LOAD_FILES_FROM_SCRATCH')):
+    query_summary = '''
+SELECT regname, 
+       max(umlball100) FILTER (WHERE testyear=2019) AS max2019,
+	   max(umlball100) FILTER (WHERE testyear=2021) AS max2021
+FROM znodata
+WHERE umlteststatus = 'Зараховано'
+GROUP BY regname'''
+else:
+    query_summary = '''
 SELECT eoregname, 
        max(ball100) FILTER (WHERE testyear=2019) AS max2019,
 	   max(ball100) FILTER (WHERE testyear=2021) AS max2021
