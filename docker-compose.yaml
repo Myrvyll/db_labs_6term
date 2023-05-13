@@ -1,27 +1,48 @@
 version: "3"
 services:
   postgres_db:
+    container_name: db_lab
     image: postgres:15-alpine
-    restart: always
     env_file:
       - .env
     ports:
       - '${DATABASE_PORT}:5432'
+    volumes:
+      - 'db_lab_data:/var/lib/postgresql/data'
     networks:
       - databases_lab
   
   app:
+    container_name: app_lab
     build:
       context: .
       dockerfile: dockerfile
     depends_on:
       - postgres_db
+    image: app-lab-image:latest
     env_file:
       - .env
     networks:
       - databases_lab
-
-
+    profiles:
+      - program
+  
+  flyway:
+    image: flyway/flyway
+    container_name: flyway
+    command: migrate -user=${POSTGRES_USER} -password=${POSTGRES_PASSWORD} -url=jdbc:postgresql://postgres_db:5432/db_laboratory -connectRetries=3 -baselineOnMigrate="true"
+    volumes:
+      - ./flyway/conf/:/flyway/conf
+      - ./flyway/sql/:/flyway/sql
+    depends_on:
+      - postgres_db
+    networks:
+      - databases_lab
+    profiles:
+      - migration
 
 networks:
   databases_lab:
+
+volumes:
+  db_lab_data:
