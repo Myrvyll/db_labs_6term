@@ -92,6 +92,7 @@ select * from edfacilities2 where eoname in (select eoname from facility_counter
 create table edfacilities as
 select edfacilities2.eoname, 
 	     edfacilities2.eoareaname, 
+       edfacilities2.eoregname,
        edfacilities2.eotername AS eotername1, 
 	     CASE WHEN edfacilities2.eotername = doubles.eotername THEN null
             ELSE doubles.eotername
