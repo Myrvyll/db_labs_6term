@@ -24,6 +24,8 @@ services:
       - .env
     networks:
       - databases_lab
+    profiles:
+      - program
   
   flyway:
     image: flyway/flyway
@@ -36,6 +38,8 @@ services:
       - postgres_db
     networks:
       - databases_lab
+    profiles:
+      - migration
 
 networks:
   databases_lab:

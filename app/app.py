@@ -178,15 +178,28 @@ sql_command_create_log_table = \
 
 FILE_19_INFO['headers'] = [re.sub('^ukr', 'uml', x) for x in FILE_19_INFO['headers']]
 
-
+drop_query = '''
+DO LANGUAGE plpgsql
+$$ 
+DECLARE
+    table_name text;
+BEGIN
+    FOR table_name IN
+       select tablename
+       from pg_tables
+       where schemaname = 'public'
+    LOOP
+        EXECUTE format('DROP TABLE IF EXISTS %I CASCADE', table_name);
+    END LOOP;
+END
+$$;'''
 # create database
 if eval(os.getenv('LOAD_FILES_FROM_SCRATCH')):
     for _ in range(5):
         try:
             connection = psycopg2.connect(dbname=DATABASE, user=USER, password=PASSWORD, port=PORT, host='postgres_db')
             cursor = connection.cursor()
-            cursor.execute('DROP TABLE IF EXISTS znodata CASCADE')
-            cursor.execute('DROP TABLE IF EXISTS transactionlog CASCADE')
+            cursor.execute(drop_query)
             cursor.execute(sql_command_create_main_table)
             cursor.execute(sql_command_create_log_table)
             connection.commit()
