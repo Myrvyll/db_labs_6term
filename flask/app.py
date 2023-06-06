@@ -1,13 +1,9 @@
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
-import sqlalchemy
-from sqlalchemy.ext.automap import automap_base
-import re
 
 app = Flask(__name__)
 
 # -----------------------------------------------------------------------------------------------
-# app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres_db:5432/db_laboratory"
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://Ashtar:sunset_clouds@localhost:5433/db_laboratory"
 db = SQLAlchemy(app)
 
@@ -36,9 +32,6 @@ class Exams(db.Model):
         db.ForeignKeyConstraint(['outid'], 
                                 ['students_data.outid'])
     )
-
-    def get_columns(self):
-        return [attr for attr in self.__table__.columns]
 
 
 
@@ -156,7 +149,6 @@ def exams():
 
         db.session.add(one_exam)
         db.session.commit()
-        # print(one_exam.__dict__)
 
     if request.method == 'POST' and (request.form.get('update_button') is not None):
         
@@ -164,7 +156,6 @@ def exams():
         id = id.split(', ')
         id[0] = id[0].split("'")[1]
         id[1] = id[1].split("'")[1]
-        # print(id)
 
         init = {}
         for i in Exams.__table__.columns.keys():
@@ -251,9 +242,6 @@ def edfacilities():
         # print(init)
         # print('-----------------------')
         
-        # if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])).first():
-        #     student = StudentsData(outid = init['outid'])
-        #     db.session.add(student)
         
         one_exam = db.session.execute(db.update(Edfacilities).where(Edfacilities.eoname == id[0], Edfacilities.eoareaname == id[1])\
                                         .values(**init))
@@ -298,9 +286,6 @@ def departments():
 
         one_department = Departments(**init)
 
-        # if not db.session.execute(db.select(Departments).where(Departments.department_name == init['department_name'])).first():
-        #     student = StudentsData(outid = init['outid'])
-        #     db.session.add(student)
 
         db.session.add(one_department)
         db.session.commit()
@@ -309,10 +294,6 @@ def departments():
     if request.method == 'POST' and (request.form.get('update_button') is not None):
         
         id = request.form.get('update_button')
-        # id = id.split(', ')
-        # id[0] = id[0].split("'")[1]
-        # id[1] = id[1].split("'")[1]
-        # print(id)
 
         init = {}
         for i in Departments.__table__.columns.keys():
@@ -325,10 +306,6 @@ def departments():
         # print(init)
         # print('-----------------------')
         
-        # if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])).first():
-        #     student = StudentsData(outid = init['outid'])
-        #     db.session.add(student)
-        
         one_department = db.session.execute(db.update(Departments).where(Departments.department_name == id)\
                                         .values(**init))
         db.session.commit()
@@ -337,11 +314,6 @@ def departments():
 
     if request.method == 'POST' and (request.form.get('delete_button') is not None):
         id = request.form.get('delete_button')
-        # print(id)
-        # id = id.split(', ')
-        # id[0] = id[0].split("'")[1]
-        # id[1] = id[1].split("'")[1]
-        
 
         db.session.execute(db.delete(Departments).where(Departments.department_name == id))
         db.session.commit()
@@ -377,15 +349,10 @@ def students():
 
         db.session.add(one_student)
         db.session.commit()
-        # print(one_exam.__dict__)
 
     if request.method == 'POST' and (request.form.get('update_button') is not None):
         
         id = request.form.get('update_button')
-        # id = id.split(', ')
-        # id[0] = id[0].split("'")[1]
-        # id[1] = id[1].split("'")[1]
-        # print(id)
 
         init = {}
         for i in StudentsData.__table__.columns.keys():
@@ -410,11 +377,6 @@ def students():
 
     if request.method == 'POST' and (request.form.get('delete_button') is not None):
         id = request.form.get('delete_button')
-        # print(id)
-        # id = id.split(', ')
-        # id[0] = id[0].split("'")[1]
-        # id[1] = id[1].split("'")[1]
-        
 
         db.session.execute(db.delete(StudentsData).where(StudentsData.outid == id))
         db.session.commit()
@@ -430,75 +392,90 @@ def students():
 # -------------------------------------------------------------------------------------------------------------------------
 
 
-# @app.route('/crud', methods=['GET', 'POST'])
-# def crud():
+@app.route('/subordination', methods=['GET', 'POST'])
+def subordination():
 
-#     if request.method == 'POST' and request.form.get('create_button') == 'create':
-#         init = {}
-#         for i in Exams.__table__.columns.keys():
-#             if request.form.get(i) != '':
-#                 init[i] = request.form.get(i)
-#             else:
-#                 init[i] = None
-#         print(init)
+    if request.method == 'POST' and request.form.get('create_button') == 'create':
+        init = {}
+        for i in Subordination.__table__.columns.keys():
+            if request.form.get(i) != '':
+                init[i] = request.form.get(i)
+            else:
+                init[i] = None
+        print(init)
 
-#         one_exam = Exams(**init)
+        connection = Subordination(**init)
 
-#         if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])).first():
-#             student = StudentsData(outid = init['outid'])
-#             db.session.add(student)
+        if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['facility_name'], Edfacilities.eoareaname == init['facility_area'])).first():
+            institution = Edfacilities(eoname = init['facility_name'], eoareaname=init['facility_area'])
+            db.session.add(institution)
 
-#         db.session.add(one_exam)
-#         db.session.commit()
-#         # print(one_exam.__dict__)
+        if not db.session.execute(db.select(Departments).where(Departments.department_name == init['department_name'])).first():
+            department = Departments(department_name = init['department_name'])
+            db.session.add(department)
 
-#     if request.method == 'POST' and (request.form.get('update_button') is not None):
+        db.session.add(connection)
+        db.session.commit()
+        # print(one_exam.__dict__)
+
+    if request.method == 'POST' and (request.form.get('update_button') is not None):
         
-#         id = request.form.get('update_button')
-#         id = id.split(', ')
-#         id[0] = id[0].split("'")[1]
-#         id[1] = id[1].split("'")[1]
-#         # print(id)
+        id = request.form.get('update_button')
+        id = id.split(', ')
+        id[0] = id[0].split("'")[1]
+        id[1] = id[1].split("'")[1]
+        id[2] = id[2].split("'")[1]
+        print(id)
 
-#         init = {}
-#         for i in Exams.__table__.columns.keys():
-#             if request.form.get(i) != 'None':
-#                 init[i] = request.form.get(i)
-#             else:
-#                 init[i] = None
-#         # print('-----------------------')
-#         # print('init')
-#         # print(init)
-#         # print('-----------------------')
+        init = {}
+        for i in Subordination.__table__.columns.keys():
+            if request.form.get(i) != 'None':
+                init[i] = request.form.get(i)
+            else:
+                init[i] = None
+        print('-----------------------')
+        print('init')
+        print(init)
+        print('-----------------------')
         
-#         if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])).first():
-#             student = StudentsData(outid = init['outid'])
-#             db.session.add(student)
+        if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['facility_name'], Edfacilities.eoareaname == init['facility_area'])).first():
+            institution = Edfacilities(eoname = init['facility_name'], eoareaname=init['facility_area'])
+            db.session.add(institution)
+
+        if not db.session.execute(db.select(Departments).where(Departments.department_name == init['department_name'])).first():
+            department = Departments(outid = init['department_name'])
+            db.session.add(department)
+
+        db.session.execute(db.update(Subordination).where(Subordination.facility_name == id[0],\
+                                                        Subordination.facility_area == id[1],\
+                                                        Subordination.department_name == id[2])\
+                                        .values(**init))
+        db.session.commit()
+        # print(one_exam)  
+
+
+    if request.method == 'POST' and (request.form.get('delete_button') is not None):
+        id = request.form.get('delete_button')
+        id = id.split(', ')
+        id[0] = id[0].split("'")[1]
+        id[1] = id[1].split("'")[1]
+        id[2] = id[2].split("'")[1]
+        print(id)
         
-#         one_exam = db.session.execute(db.update(Exams).where(Exams.outid == id[0], Exams.test == id[1])\
-#                                         .values(**init))
-#         db.session.commit()
-#         print(one_exam)  
 
+        db.session.execute(db.delete(Subordination).where(Subordination.facility_name == id[0],\
+                                                          Subordination.facility_area == id[1],\
+                                                          Subordination.department_name == id[2]))
+        db.session.commit()
 
-#     if request.method == 'POST' and (request.form.get('delete_button') is not None):
-#         id = request.form.get('delete_button')
-#         # print(id)
-#         id = id.split(', ')
-#         id[0] = id[0].split("'")[1]
-#         id[1] = id[1].split("'")[1]
-        
-
-#         db.session.execute(db.delete(Exams).where(Exams.outid == id[0], Exams.test == id[1]))
-#         db.session.commit()
     
-#     headers = Exams.__table__.columns.keys()
+    headers = Subordination.__table__.columns.keys()
 
-#     session = db.session
-#     rows = session.scalars(db.select(Exams).order_by(Exams.outid).limit(10))
-#     rows = [(row2dict(i).items(), i.outid, i.test) for i in rows]
+    session = db.session
+    rows = session.scalars(db.select(Subordination).order_by(Subordination.facility_name).limit(10))
+    rows = [(row2dict(i).items(), i.facility_name, i.facility_area, i.department_name) for i in rows]
 
-#     return render_template('crud.html', data_table=rows, headers_table=headers)
+    return render_template('subordination.html', data_table=rows, headers_table=headers)
 
 # -------------------------------------------------------------------------------------------------------------------------
 

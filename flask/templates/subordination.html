@@ -37,7 +37,7 @@
 
 
     <div class="container">
-      <h1>CRUD for educational institution</h1>
+      <h1>CRUD for subordination</h1>
     </div>
 
     <div class="container">
@@ -58,9 +58,9 @@
         
         <tbody>
           {% for record in data_table%}
-          {% set key_pair = (record.1, record.2) %}
+          {% set key_pair = (record.1, record.2, record.3) %}
           <tr> 
-            <form action='/edfacilities' method="POST" name="update_delete_form">
+            <form action='/subordination' method="POST" name="update_delete_form">
               <td><button type="submit" class="btn btn-primary" name="update_button" value="{{key_pair}}">Update</button></td>
               <td><button type="submit" class="btn btn-primary" name="delete_button" value="{{key_pair}}">Delete</button></td>
 
