@@ -4,7 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 # -----------------------------------------------------------------------------------------------
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://Ashtar:sunset_clouds@localhost:5433/db_laboratory"
+# app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://Ashtar:sunset_clouds@localhost:5433/db_laboratory"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://Ashtar:sunset_clouds@postgres_db:5432/db_laboratory"
 db = SQLAlchemy(app)
 
 class Exams(db.Model):
