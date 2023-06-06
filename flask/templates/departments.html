@@ -23,10 +23,10 @@
                   CRUD operations
                 </a>
                 <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="/crud">Exams</a></li>
-                  <li><a class="dropdown-item" href="#">Edfacilities</a></li>
-                  <li><a class="dropdown-item" href="#">Students</a></li>
-                  <li><a class="dropdown-item" href="#">Departments</a></li>
+                    <li><a class="dropdown-item" href="/exams">Exams</a></li>
+                    <li><a class="dropdown-item" href="/edfacilities">Edfacilities</a></li>
+                    <li><a class="dropdown-item" href="/students">Students</a></li>
+                    <li><a class="dropdown-item" href="/departments">Departments</a></li>
                 </ul>
               </li>
             </ul>
@@ -36,7 +36,7 @@
 
 
     <div class="container">
-      <h1>CRUD!</h1>
+      <h1>CRUD for departments</h1>
     </div>
 
     <div class="container">
@@ -57,12 +57,13 @@
         
         <tbody>
           {% for record in data_table%}
-          {% set key_pair = (record.1, record.2) %}
-          <form action='/crud' method="POST" name="update_delete_form">
-            <tr> 
-              <td><button type="submit" class="btn btn-primary" name="update_button" value="{{key_pair}}">Update</button></td>
-              <td><button type="submit" class="btn btn-primary" name="delete_button" value="{{key_pair}}">Delete</button></td>
-              {% for field in record.0%} 
+          <!-- {% set key_pair = (record.1, record.2) %} -->
+          <tr> 
+            <form action='/departments' method="POST" name="update_delete_form">
+              <td><button type="submit" class="btn btn-primary" name="update_button" value="{{record.1}}">Update</button></td>
+              <td><button type="submit" class="btn btn-primary" name="delete_button" value="{{record.1}}">Delete</button></td>
+
+              {% for field in record[0]%} 
                 <td><input value='{{field[1]}}' name={{field[0]}}></input></td>
               {% endfor %}
             </form>
