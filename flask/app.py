@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
+import re
 
 app = Flask(__name__)
 
@@ -35,6 +36,9 @@ class Exams(db.Model):
         db.ForeignKeyConstraint(['outid'], 
                                 ['students_data.outid'])
     )
+
+    def get_columns(self):
+        return [attr for attr in self.__table__.columns]
 
 
 
@@ -121,15 +125,89 @@ def db_request():
     subject_names = session.execute(db.select(Exams.test).distinct())
     return render_template('request.html', years=years, region_names=region_names, subject_names=subject_names)
 
-@app.route('/crud')
+
+row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
+
+@app.route('/crud', methods=['GET', 'POST'])
 def crud():
+
+    if request.method == 'POST' and request.form.get('create_button') == 'create':
+        
+        init = {}
+        for i in Exams.__table__.columns.keys():
+            if request.form.get(i) != '':
+                init[i] = request.form.get(i)
+            else:
+                init[i] = None
+        print(init)
+
+        one_exam = Exams(**init)
+        if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])):
+            student = StudentsData(outid = init['outid'])
+            db.session.add(student)
+        db.session.add(one_exam)
+        db.session.commit()
+
+        print(one_exam.__dict__)
+
+        
+    if request.method == 'POST' and (request.form.get('update_button') is not None):
+        
+        id = request.form.get('update_button')
+        id = id.split(', ')
+        id[0] = id[0].split("'")[1]
+        id[1] = id[1].split("'")[1]
+        print(id)
+
+        init = {}
+        for i in Exams.__table__.columns.keys():
+            if request.form.get(i) != 'None':
+                init[i] = request.form.get(i)
+            else:
+                init[i] = None
+        print('-----------------------')
+        print('init')
+        print(init)
+        print('-----------------------')
+
+        one_exam = db.session.execute(db.update(Exams).where(Exams.outid == id[0], Exams.test == id[1])\
+                                        .values(**init))
+
+        # for key, item in init.items():
+        #     one_exam.key = item
+
+
+
+        # for 
+        # db.session.add(one_exam)
+        db.session.commit()
+        # print(request.form.get['update_button'])
+
+        print('im here')
+        print(one_exam)  
+
+
+    if request.method == 'POST' and (request.form.get('delete_button') is not None):
+        id = request.form.get('delete_button')
+        print(id)
+        id = id.split(', ')
+        id[0] = id[0].split("'")[1]
+        id[1] = id[1].split("'")[1]
+        
+
+        db.session.execute(db.delete(Exams).where(Exams.outid == id[0], Exams.test == id[1]))
+        db.session.commit()
+    
+        
+
     session = db.session
-    rows = tuple(session.execute(db.select(Exams).limit(1)))
+    rows = session.scalars(db.select(Exams).order_by(Exams.outid).limit(10))
 
     headers = Exams.__table__.columns.keys()
-    print(rows)
-    
 
+    rows = [(row2dict(i).items(), i.outid, i.test) for i in rows]
+
+    
     return render_template('crud.html', data_table=rows, headers_table=headers)
 
 
@@ -156,7 +234,6 @@ def request_result():
                       Edfacilities.eoregname == region)
     data_single = session.execute(quest_single).first()
     
-    # descr = data.column_descriptions
     keys = data_table.keys()
     return render_template('request_result.html', year=year, 
                            region=region, subject=subject, max_ball = data_single,

@@ -58,9 +58,9 @@
           <tbody>
             {% for record in data_table%}
             <tr>  
-              {% for elem in record%}      
+              {% for elem in record%}
                 <td>{{elem}}</td>
-              {% endfor %}
+                {% endfor %}
             </tr>
             {% endfor %}
           </tbody>
