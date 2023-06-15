@@ -138,15 +138,16 @@ def exams():
         print(init)
 
         one_exam = Exams(**init)
+        if init['outid'] is not None:
+            if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])).first():
+                student = StudentsData(outid = init['outid'])
+                db.session.add(student)
 
-        if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])).first():
-            student = StudentsData(outid = init['outid'])
-            db.session.add(student)
-
-        if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['ptname'], Edfacilities.eoareaname == init['ptareaname'])).first():
-            institution = Edfacilities(eoname = init['ptname'], eoareaname=init['ptareaname'])
-            db.session.add(institution)
-
+        if (init['ptname'] is not None) or (init['ptareaname'] is not None):
+            if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['ptname'], Edfacilities.eoareaname == init['ptareaname'])).first():
+                institution = Edfacilities(eoname = init['ptname'], eoareaname=init['ptareaname'])
+                db.session.add(institution)
+    
 
         db.session.add(one_exam)
         db.session.commit()
@@ -169,13 +170,15 @@ def exams():
         # print(init)
         # print('-----------------------')
         
-        if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])).first():
-            student = StudentsData(outid = init['outid'])
-            db.session.add(student)
+        if init['outid'] is not None:
+            if not db.session.execute(db.select(StudentsData).where(StudentsData.outid == init['outid'])).first():
+                student = StudentsData(outid = init['outid'])
+                db.session.add(student)
 
-        if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['ptname'], Edfacilities.eoareaname == init['ptareaname'])).first():
-            institution = Edfacilities(eoname = init['ptname'], eoareaname=init['ptareaname'])
-            db.session.add(institution)
+        if (init['ptname'] is not None) or (init['ptareaname'] is not None):
+            if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['ptname'], Edfacilities.eoareaname == init['ptareaname'])).first():
+                institution = Edfacilities(eoname = init['ptname'], eoareaname=init['ptareaname'])
+                db.session.add(institution)
         
         one_exam = db.session.execute(db.update(Exams).where(Exams.outid == id[0], Exams.test == id[1])\
                                         .values(**init))
@@ -343,10 +346,11 @@ def students():
         print(init)
 
         one_student = StudentsData(**init)
-
-        if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['eoname'], Edfacilities.eoareaname == init['eoareaname'])).first():
-            institution = Edfacilities(eoname = init['eoname'], eoareaname=init['eoareaname'])
-            db.session.add(institution)
+        
+        if (init['eoname'] is not None) or (init['eoareaname'] is not None):
+            if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['eoname'], Edfacilities.eoareaname == init['eoareaname'])).first():
+                institution = Edfacilities(eoname = init['eoname'], eoareaname=init['eoareaname'])
+                db.session.add(institution)
 
         db.session.add(one_student)
         db.session.commit()
@@ -365,10 +369,10 @@ def students():
         # print('init')
         # print(init)
         # print('-----------------------')
-        
-        if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['eoname'], Edfacilities.eoareaname == init['eoareaname'])).first():
-            institution = Edfacilities(eoname = init['eoname'], eoareaname=init['eoareaname'])
-            db.session.add(institution)
+        if (init['eoname'] is not None) or (init['eoareaname'] is not None):      
+            if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['eoname'], Edfacilities.eoareaname == init['eoareaname'])).first():
+                institution = Edfacilities(eoname = init['eoname'], eoareaname=init['eoareaname'])
+                db.session.add(institution)
         
         one_student = db.session.execute(db.update(StudentsData).where(StudentsData.outid == id)\
                                         .values(**init))
@@ -406,14 +410,15 @@ def subordination():
         print(init)
 
         connection = Subordination(**init)
+        if (init['facility_name'] is not None) or (init['facility_area'] is not None):
+            if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['facility_name'], Edfacilities.eoareaname == init['facility_area'])).first():
+                institution = Edfacilities(eoname = init['facility_name'], eoareaname=init['facility_area'])
+                db.session.add(institution)
 
-        if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['facility_name'], Edfacilities.eoareaname == init['facility_area'])).first():
-            institution = Edfacilities(eoname = init['facility_name'], eoareaname=init['facility_area'])
-            db.session.add(institution)
-
-        if not db.session.execute(db.select(Departments).where(Departments.department_name == init['department_name'])).first():
-            department = Departments(department_name = init['department_name'])
-            db.session.add(department)
+        if (init['department_name'] is not None):
+            if not db.session.execute(db.select(Departments).where(Departments.department_name == init['department_name'])).first():
+                department = Departments(department_name = init['department_name'])
+                db.session.add(department)
 
         db.session.add(connection)
         db.session.commit()
@@ -438,15 +443,17 @@ def subordination():
         print('init')
         print(init)
         print('-----------------------')
-        
-        if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['facility_name'], Edfacilities.eoareaname == init['facility_area'])).first():
-            institution = Edfacilities(eoname = init['facility_name'], eoareaname=init['facility_area'])
-            db.session.add(institution)
 
-        if not db.session.execute(db.select(Departments).where(Departments.department_name == init['department_name'])).first():
-            department = Departments(outid = init['department_name'])
-            db.session.add(department)
+        if (init['facility_name'] is not None) or (init['facility_area'] is not None):
+            if not db.session.execute(db.select(Edfacilities).where(Edfacilities.eoname == init['facility_name'], Edfacilities.eoareaname == init['facility_area'])).first():
+                institution = Edfacilities(eoname = init['facility_name'], eoareaname=init['facility_area'])
+                db.session.add(institution)
 
+        if (init['department_name'] is not None):  
+            if not db.session.execute(db.select(Departments).where(Departments.department_name == init['department_name'])).first():
+                department = Departments(outid = init['department_name'])
+                db.session.add(department)
+    
         db.session.execute(db.update(Subordination).where(Subordination.facility_name == id[0],\
                                                         Subordination.facility_area == id[1],\
                                                         Subordination.department_name == id[2])\
