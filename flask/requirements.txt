@@ -1,0 +1,6 @@
+psycopg2-binary
+pandas
+numpy
+flask-sqlalchemy
+flask==2.3.2
+redis[hiredis]

@@ -27,6 +27,37 @@ services:
     profiles:
       - program
   
+  app_web_interface:
+    container_name: app_web_lab
+    build:
+      context: flask/.
+      dockerfile: dockerfile
+    depends_on:
+      - postgres_db
+    image: app-web-lab-image:latest
+    ports:
+      - '127.0.0.1:5000:5000'
+    networks:
+      - databases_lab
+    profiles:
+      - web_interface
+
+
+  redis_lab:
+    container_name: redis_lab
+    build:
+      context: redis/.
+      dockerfile: dockerfile
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+    profiles:
+      - web_interface
+    networks:
+      - databases_lab
+
+
   flyway:
     image: flyway/flyway
     container_name: flyway
@@ -46,3 +77,4 @@ networks:
 
 volumes:
   db_lab_data:
+  redis_data:
